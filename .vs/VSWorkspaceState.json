@@ -1,0 +1,17 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\.circleci",
+    "\\.circleci\\ansible\\roles",
+    "\\.circleci\\ansible\\roles\\deploy",
+    "\\.circleci\\ansible\\roles\\deploy\\tasks",
+    "\\backend\\src",
+    "\\frontend",
+    "\\frontend\\src",
+    "\\frontend\\src\\app",
+    "\\frontend\\src\\app\\components",
+    "\\frontend\\src\\app\\components\\LoadingMessage"
+  ],
+  "SelectedNode": "\\frontend\\src\\app\\components\\LoadingMessage\\LoadingMessage.spec.tsx",
+  "PreviewInSolutionExplorer": false
+}
