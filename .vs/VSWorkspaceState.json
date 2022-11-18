@@ -3,13 +3,7 @@
     "",
     "\\.circleci",
     "\\.circleci\\ansible",
-    "\\backend",
-    "\\backend\\src\\modules",
-    "\\backend\\src\\modules\\domain",
-    "\\backend\\src\\modules\\domain\\employees",
-    "\\backend\\src\\modules\\domain\\employees\\commands",
-    "\\backend\\src\\modules\\domain\\employees\\commands\\handlers"
+    "\\backend"
   ],
-  "SelectedNode": "\\.circleci",
   "PreviewInSolutionExplorer": false
 }
