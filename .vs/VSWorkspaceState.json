@@ -3,7 +3,10 @@
     "",
     "\\.circleci",
     "\\.circleci\\ansible",
-    "\\backend"
+    "\\.circleci\\ansible\\roles",
+    "\\.circleci\\ansible\\roles\\configure-server",
+    "\\.circleci\\ansible\\roles\\configure-server\\tasks"
   ],
+  "SelectedNode": "\\.circleci\\ansible\\configure-server.yml",
   "PreviewInSolutionExplorer": false
 }
