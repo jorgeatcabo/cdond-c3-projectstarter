@@ -317,10 +317,10 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update curl
- #     - run:
- #         name: Install AWS CLI
- #         command: |
- #           apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
+      - run:
+          name: Install AWS CLI
+          command: |
+            apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
  #     - run:
  #         name: Backend smoke test.
  #         command: |
@@ -351,7 +351,25 @@ jobs:
           command: |
             aws s3 rm --recursive s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
       - destroy-environment  
-
+  cloudfront-update:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - run:
+          name: Install AWS CLI
+          command: |
+            apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            # your code here
+      - run:
+          name: delete s3 bucket
+          when: on_fail
+          command: |
+            aws s3 rm --recursive s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
+      - destroy-environment  
 workflows:
   default:
     jobs:
