@@ -11,6 +11,7 @@ commands:
           when: on_fail
           command: |
             echo "Destroying environment: ${CIRCLE_WORKFLOW_ID:0:7} "
+            aws s3 rm --recursive s3://udapeople-"${CIRCLE_WORKFLOW_ID:0:7}"
             aws cloudformation delete-stack \
               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}"
             aws cloudformation delete-stack \
@@ -180,16 +181,13 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update ansible
+            pip install awscli --upgrade
+            aws --version
       - run:
           name: Configure server
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
-      - run:
-          name: Install AWS CLI for rollback
-          when: on_fail
-          command: |
-            apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
       - destroy-environment
       
   run-migrations:
@@ -197,6 +195,11 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
+      - run:
+          name: AWS CLI 
+          command: |
+            pip install awscli --upgrade
+            aws --version
       - run:
           name: Run migrations
           command: |
@@ -211,13 +214,6 @@ jobs:
               echo "insecure" >> ~/.curlrc
               curl https://kvdb.io/HsfNexDRL41cZ4tMRwcmu2/migration_$\{CIRCLE_WORKFLOW_ID:0:7\}  -d '1'
             fi
-      - run:
-          name: Install AWS CLI for rollback and revert migrations
-          when: on_fail
-          command: |
-            sudo apt-get -y -qq update
-            sudo apt-get -y -qq install python3
-            sudo apt-get -qq install awscli
       - destroy-environment
 
   deploy-frontend:
@@ -259,11 +255,6 @@ jobs:
             sudo npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-      - run:
-          name: delete s3 bucket
-          when: on_fail
-          command: |
-            aws s3 rm --recursive s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
       - destroy-environment
 
   deploy-backend:
@@ -280,6 +271,8 @@ jobs:
           command: |
             apk add --update ansible openssh-client tar gzip
             apk add --update nodejs npm
+            pip install awscli --upgrade
+            aws --version
       - run:
           name: Build Artifacts
           command: |
@@ -313,11 +306,6 @@ jobs:
           when: on_fail
           command: |
             apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
-      - run:
-          name: delete s3 bucket
-          when: on_fail
-          command: |
-            aws s3 rm --recursive s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
       - destroy-environment
 
   smoke-test:
@@ -358,37 +346,30 @@ jobs:
             else
               return 1
             fi
-      - run:
-          name: delete s3 bucket
-          when: on_fail
-          command: |
-            aws s3 rm --recursive s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
       - destroy-environment  
 
   cloudfront-update:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: amazon/aws-cli
     steps:
-      - checkout
-      - run:
-          name: Install AWS CLI
-          command: |
-            apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
+      - checkout  
       - run:
           name: Update cloudfront distribution
           command: |
-            # Change the initial stack name, as applicable to you
+            export OldWorkflowID=$(aws cloudformation \
+            list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+            --no-paginate --output text)
+
+            echo OldWorkflowID: "${OldWorkflowID}"
+            echo WorkflowID: "${CIRCLE_WORKFLOW_ID:0:7}"
+
             aws cloudformation deploy \
-                --template-file .circleci/files/cloudfront.yml \
-                --stack-name InitialStack \
-                --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
-                --tags project=udapeople
-      - run:
-          name: delete s3 bucket
-          when: on_fail
-          command: |
-            aws s3 rm --recursive s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}
-      - destroy-environment  
+              --template-file .circleci/files/cloudfront.yml \
+              --stack-name InitialStack \
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" OldWorkflowID="${OldWorkflowID}" \
+              --tags project=udapeople
+      - destroy-environment 
+      - revert-migrations
 
   cleanup:
     docker:
@@ -401,15 +382,16 @@ jobs:
           command: |
             # Fetch the Old workflow ID
             export OldWorkflowID=$(aws cloudformation \
-            list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+            list-exports --query "Exports[?Name==\`OldWorkflowID\`].Value" \
             --no-paginate --output text)
-            echo OldWorkflowID: "${OldWorkflowID}"            
+            echo OldWorkflowID: "${OldWorkflowID}"
+            
             echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
             # Fetch the stack names          
             export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
                     --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
             echo Stack names: "${STACKS[@]}"
-            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" =~ "${OldWorkflowID}" ]]
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
             # your code goes here
               echo "remove previous stack"
@@ -447,6 +429,3 @@ workflows:
           requires: [smoke-test]
       - cleanup:
           requires: [cloudfront-update]
-          #
-
-
