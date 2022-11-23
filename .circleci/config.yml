@@ -192,9 +192,25 @@ jobs:
       
   run-migrations:
     docker:
-      - image: circleci/node:13.8.0
+      # Docker image here that supports NodeJS
+      - image: python:3.7-alpine3.11
     steps:
+      # Checkout code from git
       - checkout
+      - attach_workspace:
+          at: ~/
+      - run:
+            name: Install dependencies
+            command: |
+              apk update
+              apk upgrade
+              apk add unzip 
+              apk add curl
+              /usr/local/bin/python -m pip install --upgrade pip    
+      - run:
+            name: Install node
+            command: |
+              apk add --update nodejs nodejs-npm
       - run:
           name: AWS CLI 
           command: |
