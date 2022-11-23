@@ -25,6 +25,7 @@ commands:
     steps:
       - run:
           name: Revert migrations
+          when: on_fail
           command: |
             SUCCESS=$(curl --insecure  https://kvdb.io/HsfNexDRL41cZ4tMRwcmu2/migration_${CIRCLE_WORKFLOW_ID:0:7})
             SUCCESS = 1
@@ -364,25 +365,9 @@ jobs:
 
   cloudfront-update:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: amazon/aws-cli
     steps:
       - checkout  
-      - run:
-            name: Install dependencies
-            command: |
-              apk update
-              apk upgrade
-              apk add curl
-              /usr/local/bin/python -m pip install --upgrade pip    
-      - run:
-            name: Install node
-            command: |
-              apk add --update nodejs nodejs-npm
-      - run:
-          name: AWS CLI 
-          command: |
-            pip install awscli --upgrade
-            aws --version
       - run:
           name: Update cloudfront distribution
           command: |
