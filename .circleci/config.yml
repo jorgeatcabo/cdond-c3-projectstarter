@@ -270,7 +270,8 @@ jobs:
             sudo npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-      - destroy-environment
+      - destroy-environment  
+      - revert-migrations
 
   deploy-backend:
     docker:
@@ -291,7 +292,6 @@ jobs:
       - run:
           name: Build Artifacts
           command: |
-            # Create .env file
             echo ENVIRONMENT=production >> "backend/.env"
             echo NODE_ENV=production >> "backend/.env"
             echo TYPEORM_CONNECTION=postgres >> "backend/.env"
@@ -316,12 +316,8 @@ jobs:
             cat inventory.txt
             export ANSIBLE_HOST_KEY_CHECKING=False
             ansible-playbook -i inventory.txt deploy-backend.yml
-      - run:
-          name: Install AWS CLI for rollback
-          when: on_fail
-          command: |
-            apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
       - destroy-environment
+      - revert-migrations
 
   smoke-test:
     docker:
@@ -362,6 +358,7 @@ jobs:
               return 1
             fi
       - destroy-environment  
+      - revert-migrations 
 
   cloudfront-update:
     docker:
