@@ -189,6 +189,11 @@ jobs:
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
+      - run:
+          name: Install node_exporter
+          command: |
+            cd .circleci/ansible/
+            ansible-playbook -i inventory.txt configure-node-exporter.yml
       - destroy-environment
       
   run-migrations:
