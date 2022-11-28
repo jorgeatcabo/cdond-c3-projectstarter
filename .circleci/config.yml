@@ -333,8 +333,8 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update ansible
-            apk add --update nodejs nodejs-npm
-            apk add --update curl
+            apk add --update nodejs nodejs-npm            
+            apk update && apk add curl curl-dev bash
             pip install awscli --upgrade
             aws --version
       - run:
