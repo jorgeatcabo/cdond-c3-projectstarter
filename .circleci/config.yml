@@ -329,16 +329,14 @@ jobs:
       - image: python:3.7-alpine3.11
     steps:
       - checkout
-      - attach_workspace:
-          at: ~/
       - run:
           name: Install dependencies
           command: |
+            apk add --update ansible
+            apk add --update nodejs nodejs-npm
             apk add --update curl
-      - run:
-          name: Install AWS CLI
-          command: |
-            apk add --update py3-pip && pip3 install --upgrade pip && pip3 install awscli
+            pip install awscli --upgrade
+            aws --version
       - run:
           name: Backend smoke test.
           command: |
